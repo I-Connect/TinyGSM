@@ -130,10 +130,12 @@ class TinyGsmSim7000SSL
     }
 
 
-    GsmClientSim7000SSL* createClient() {
+    GsmClientSim7000SSL* createClient(bool ssl = false) {
       for (uint8_t idx = 0; idx < TINY_GSM_MUX_COUNT; idx++) {
         if (!sockets[idx]) {
-          GsmClientSim7000SSL* client = new GsmClientSim7000SSL();
+          GsmClientSim7000SSL* client = ssl 
+            ? new GsmClientSecureSIM7000SSL() 
+            : new GsmClientSim7000SSL();
           client->init(this, idx);
           return client;
         }
