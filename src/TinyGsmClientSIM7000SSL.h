@@ -44,6 +44,7 @@ class TinyGsmSim7000SSL
         virtual ~GsmClientSim7000SSL() {
           stop();
           at->sockets[mux] = nullptr;
+          log_d("Closing client mux %u", mux);
         }
 
 
@@ -133,9 +134,10 @@ class TinyGsmSim7000SSL
     GsmClientSim7000SSL* createClient(bool ssl = false) {
       for (uint8_t idx = 0; idx < TINY_GSM_MUX_COUNT; idx++) {
         if (!sockets[idx]) {
-          GsmClientSim7000SSL* client = ssl 
-            ? new GsmClientSecureSIM7000SSL() 
-            : new GsmClientSim7000SSL();
+          log_d("Creating %sclient, mux %u", ssl ? "Secure " : "", idx);
+          GsmClientSim7000SSL* client = ssl
+                                        ? new GsmClientSecureSIM7000SSL()
+                                        : new GsmClientSim7000SSL();
           client->init(this, idx);
           return client;
         }
@@ -211,7 +213,7 @@ class TinyGsmSim7000SSL
         modemGetAvailable(0);
       }
       while (stream.available()) {
-        waitResponse(15, NULL, NULL);
+        waitResponse(15, NULL, NULL); // Why?
       }
     }
 
@@ -548,16 +550,22 @@ class TinyGsmSim7000SSL
     }
 
     size_t modemGetAvailable(uint8_t mux) {
-      // If the socket doesn't exist, just return
-      if (!sockets[mux]) {
+
+      bool anySocketConnected = false;
+      // Reset sock_available on all sockets
+      for (int muxNo = 0; muxNo < TINY_GSM_MUX_COUNT; muxNo++) {
+        GsmClientSim7000SSL* isock = sockets[muxNo];
+        if (isock) {
+          isock->sock_available = 0;
+          anySocketConnected |= isock->sock_connected;
+        }
+      }
+
+      if (!anySocketConnected) {
+        log_w("No sockets connected");
         return 0;
       }
-      // We need to check if there are any connections open *before* checking for
-      // available characters.  The SIM7000 *will crash* if you ask about data
-      // when there are no open connections.
-      if (!modemGetConnected(mux)) {
-        return 0;
-      }
+
       // NOTE: This gets how many characters are available on all connections that
       // have data.  It does not return all the connections, just those with data.
       sendAT(GF("+CARECV?"));
@@ -573,29 +581,7 @@ class TinyGsmSim7000SSL
           if (sock) {
             sock->sock_available = result;
           }
-          // if the first returned mux isn't 0 (or is higher than expected)
-          // we need to fill in the missing muxes
-          if (ret_mux > muxNo) {
-            for (int extra_mux = muxNo; extra_mux < ret_mux; extra_mux++) {
-              GsmClientSim7000SSL* isock = sockets[extra_mux];
-              if (isock) {
-                isock->sock_available = 0;
-              }
-            }
-            muxNo = ret_mux;
-          }
-        } else if (res == 2) {
-          // if we get an OK, we've reached the last socket with available data
-          // so we set any we haven't gotten to yet to 0
-          for (int extra_mux = muxNo; extra_mux < TINY_GSM_MUX_COUNT;
-               extra_mux++) {
-            GsmClientSim7000SSL* isock = sockets[extra_mux];
-            if (isock) {
-              isock->sock_available = 0;
-            }
-          }
-          break;
-        } else {
+        } else if (res == 3) {
           // if we got an error, give up
           break;
         }
@@ -606,7 +592,7 @@ class TinyGsmSim7000SSL
           waitResponse();
         }
       }
-      modemGetConnected(mux);  // check the state of all connections
+      modemGetConnected(0);  // check the state of all connections, discard result of mux 0 (arbitrary)
       if (!sockets[mux]) {
         return 0;
       }
@@ -614,6 +600,14 @@ class TinyGsmSim7000SSL
     }
 
     bool modemGetConnected(uint8_t mux) {
+
+      // Reset sock_connected on all sockets
+      for (int muxNo = 0; muxNo < TINY_GSM_MUX_COUNT; muxNo++) {
+        GsmClientSim7000SSL* isock = sockets[muxNo];
+        if (isock) {
+          isock->sock_connected = false;
+        }
+      }
       // NOTE:  This gets the state of all connections that have been opened
       // since the last connection
       sendAT(GF("+CASTATE?"));
@@ -633,29 +627,7 @@ class TinyGsmSim7000SSL
           if (sock) {
             sock->sock_connected = (status == 1);
           }
-          // if the first returned mux isn't 0 (or is higher than expected)
-          // we need to fill in the missing muxes
-          if (ret_mux > muxNo) {
-            for (int extra_mux = muxNo; extra_mux < ret_mux; extra_mux++) {
-              GsmClientSim7000SSL* isock = sockets[extra_mux];
-              if (isock) {
-                isock->sock_connected = false;
-              }
-            }
-            muxNo = ret_mux;
-          }
-        } else if (res == 2) {
-          // if we get an OK, we've reached the last socket with available data
-          // so we set any we haven't gotten to yet to 0
-          for (int extra_mux = muxNo; extra_mux < TINY_GSM_MUX_COUNT;
-               extra_mux++) {
-            GsmClientSim7000SSL* isock = sockets[extra_mux];
-            if (isock) {
-              isock->sock_connected = false;
-            }
-          }
-          break;
-        } else {
+        } else if (res == 3) {
           // if we got an error, give up
           break;
         }
