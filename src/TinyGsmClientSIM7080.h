@@ -161,7 +161,6 @@ class TinyGsmSim7080 : public TinyGsmSim70xx<TinyGsmSim7080>,
 
       SimStatus ret = getSimStatus();
       // if the sim isn't ready and a pin has been provided, try to unlock the sim
-      log_d("ret simstatus: %d", ret);
       if (ret != SIM_READY && pin != NULL && strlen(pin) > 0) {
         simUnlock(pin);
         return (getSimStatus() == SIM_READY);
