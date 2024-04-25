@@ -121,13 +121,6 @@ class TinyGsmSim7080 : public TinyGsmSim70xx<TinyGsmSim7080>,
       memset(sockets, 0, sizeof(sockets));
     }
 
-    uint8_t getFunct() {
-      sendAT(GF("+CFUN?"));
-      int8_t response = waitResponse(GF("+CFUN:"));
-      log_d("cfun : %d", response);
-      return response;
-    }
-
     /*
      * Basic functions
      */
