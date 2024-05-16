@@ -363,6 +363,35 @@ class TinyGsmSim7080 : public TinyGsmSim70xx<TinyGsmSim7080>,
       return atoi(res.c_str());
     }
 
+    String getGnssSystemMode() {
+      sendAT(GF("+CGNSMOD?"));
+      if (waitResponse(GF(GSM_NL "+CGNSMOD:")) != 1) {
+        return "Gnss system mode not available";
+      }
+      String res = stream.readStringUntil('\n');
+      waitResponse();
+
+      return res;
+    }
+
+    bool enableGpio(uint8_t gpio, bool enable){
+      //AT+SGPIO=<operation>,<GPIO>,<function>,<level>
+      // <operation> 0 Set the GPIO function including the GPIO output. 1 Read the GPIO level. 
+      // Please note that only when the gpioisset asinput, user can use parameter 1 to read the GPIO level, otherwisethemodule will return "ERROR". 
+      //<GPIO> The GPIO you want to be set. (It has relations with the hardware, please refer to the hardware manual)
+      // <function> Only when <operation> is set to 0, this option takes effect. 0 Set the GPIO to input. 1 Set the GPIO to output
+      // <level> 0 GPIO low level 1 GPIO high level
+      if(gpio > 7){
+        log_w("invalid gpio");
+        return false;
+      }
+      char msg[20] = {};
+      sprintf(msg, "+SGPIO=0,%d,1,%d", gpio, enable);
+      sendAT(GF(msg));
+
+      return waitResponse(10000L, GF("OK")) == 1;
+    }
+
   protected:
     bool modemConnect(const char* host, uint16_t port, uint8_t mux,
                       bool ssl = false, int timeout_s = 75) {
