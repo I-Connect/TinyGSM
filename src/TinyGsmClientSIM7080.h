@@ -374,14 +374,14 @@ class TinyGsmSim7080 : public TinyGsmSim70xx<TinyGsmSim7080>,
       return res;
     }
 
-    bool enableGpio(uint8_t gpio, bool enable){
+    bool enableGpio(uint8_t gpio, bool enable) {
       //AT+SGPIO=<operation>,<GPIO>,<function>,<level>
-      // <operation> 0 Set the GPIO function including the GPIO output. 1 Read the GPIO level. 
-      // Please note that only when the gpioisset asinput, user can use parameter 1 to read the GPIO level, otherwisethemodule will return "ERROR". 
+      // <operation> 0 Set the GPIO function including the GPIO output. 1 Read the GPIO level.
+      // Please note that only when the gpioisset asinput, user can use parameter 1 to read the GPIO level, otherwisethemodule will return "ERROR".
       //<GPIO> The GPIO you want to be set. (It has relations with the hardware, please refer to the hardware manual)
       // <function> Only when <operation> is set to 0, this option takes effect. 0 Set the GPIO to input. 1 Set the GPIO to output
       // <level> 0 GPIO low level 1 GPIO high level
-      if(gpio > 7){
+      if (gpio > 7) {
         log_w("invalid gpio");
         return false;
       }
@@ -592,10 +592,10 @@ class TinyGsmSim7080 : public TinyGsmSim70xx<TinyGsmSim7080>,
           // if the first returned mux isn't 0 (or is higher than expected)
           // we need to fill in the missing muxes
           if (ret_mux > muxNo) {
-            for (int extra_mux = muxNo; extra_mux < ret_mux; extra_mux++) {
+            for (int extra_mux = muxNo; extra_mux < ret_mux + 1; extra_mux++) {
               GsmClientSim7080* isock = sockets[extra_mux];
               if (isock) {
-                isock->sock_available = 0;
+                isock->sock_available = result;
               }
             }
             muxNo = ret_mux;
