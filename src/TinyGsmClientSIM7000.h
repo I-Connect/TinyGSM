@@ -448,8 +448,13 @@ class TinyGsmSim7000 : public TinyGsmSim70xx<TinyGsmSim7000>,
     }
 
     size_t modemGetAvailable(uint8_t mux) {
-      if (!sockets[mux]) {
-        return 0;
+
+      // Reset sock_available on all sockets
+      for (int muxNo = 0; muxNo < TINY_GSM_MUX_COUNT; muxNo++) {
+        GsmClientSim7000* isock = sockets[muxNo];
+        if (isock) {
+          isock->sock_available = 0;
+        }
       }
 
       sendAT(GF("+CIPRXGET=4,"), mux);
