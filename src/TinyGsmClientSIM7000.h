@@ -449,12 +449,12 @@ class TinyGsmSim7000 : public TinyGsmSim70xx<TinyGsmSim7000>,
 
     size_t modemGetAvailable(uint8_t mux) {
 
-      // Reset sock_available on all sockets
-      for (int muxNo = 0; muxNo < TINY_GSM_MUX_COUNT; muxNo++) {
-        GsmClientSim7000* isock = sockets[muxNo];
-        if (isock) {
-          isock->sock_available = 0;
-        }
+      if (sockets[mux]) {
+        sockets[mux]->sock_connected = modemGetConnected(mux);
+      }
+
+      if (!sockets[mux]->sock_connected) {
+        return 0;
       }
 
       sendAT(GF("+CIPRXGET=4,"), mux);
@@ -470,9 +470,7 @@ class TinyGsmSim7000 : public TinyGsmSim70xx<TinyGsmSim7000>,
         break;
       }
       // DBG("### Available:", result, "on", mux);
-      if (!result) {
-        sockets[mux]->sock_connected = modemGetConnected(mux);
-      }
+      sockets[mux]->sock_available = result;
       return result;
     }
 
