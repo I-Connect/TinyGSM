@@ -59,131 +59,85 @@ enum SIM7600RegStatus {
 };
 
 class TinyGsmSim7600 : public TinyGsmModem<TinyGsmSim7600>,
-  public TinyGsmGPRS<TinyGsmSim7600>,
-  public TinyGsmTCP<TinyGsmSim7600, TINY_GSM_MUX_COUNT>,
-  public TinyGsmSMS<TinyGsmSim7600>,
-  public TinyGsmGSMLocation<TinyGsmSim7600>,
-  public TinyGsmGPS<TinyGsmSim7600>,
-  public TinyGsmTime<TinyGsmSim7600>,
-  public TinyGsmNTP<TinyGsmSim7600>,
-  public TinyGsmBattery<TinyGsmSim7600>,
-  public TinyGsmTemperature<TinyGsmSim7600>,
-  public TinyGsmCalling<TinyGsmSim7600> {
-    friend class TinyGsmModem<TinyGsmSim7600>;
-    friend class TinyGsmGPRS<TinyGsmSim7600>;
-    friend class TinyGsmTCP<TinyGsmSim7600, TINY_GSM_MUX_COUNT>;
-    friend class TinyGsmSMS<TinyGsmSim7600>;
-    friend class TinyGsmGPS<TinyGsmSim7600>;
-    friend class TinyGsmGSMLocation<TinyGsmSim7600>;
-    friend class TinyGsmTime<TinyGsmSim7600>;
-    friend class TinyGsmNTP<TinyGsmSim7600>;
-    friend class TinyGsmBattery<TinyGsmSim7600>;
-    friend class TinyGsmTemperature<TinyGsmSim7600>;
-    friend class TinyGsmCalling<TinyGsmSim7600>;
+                       public TinyGsmGPRS<TinyGsmSim7600>,
+                       public TinyGsmTCP<TinyGsmSim7600, TINY_GSM_MUX_COUNT>,
+                       public TinyGsmSMS<TinyGsmSim7600>,
+                       public TinyGsmGSMLocation<TinyGsmSim7600>,
+                       public TinyGsmGPS<TinyGsmSim7600>,
+                       public TinyGsmTime<TinyGsmSim7600>,
+                       public TinyGsmNTP<TinyGsmSim7600>,
+                       public TinyGsmBattery<TinyGsmSim7600>,
+                       public TinyGsmTemperature<TinyGsmSim7600>,
+                       public TinyGsmCalling<TinyGsmSim7600> {
+  friend class TinyGsmModem<TinyGsmSim7600>;
+  friend class TinyGsmGPRS<TinyGsmSim7600>;
+  friend class TinyGsmTCP<TinyGsmSim7600, TINY_GSM_MUX_COUNT>;
+  friend class TinyGsmSMS<TinyGsmSim7600>;
+  friend class TinyGsmGPS<TinyGsmSim7600>;
+  friend class TinyGsmGSMLocation<TinyGsmSim7600>;
+  friend class TinyGsmTime<TinyGsmSim7600>;
+  friend class TinyGsmNTP<TinyGsmSim7600>;
+  friend class TinyGsmBattery<TinyGsmSim7600>;
+  friend class TinyGsmTemperature<TinyGsmSim7600>;
+  friend class TinyGsmCalling<TinyGsmSim7600>;
 
-    /*
-     * Inner Client
-     */
-  public:
-    class GsmClientSim7600 : public GsmClient {
-        friend class TinyGsmSim7600;
+  /*
+   * Inner Client
+   */
+ public:
+  class GsmClientSim7600 : public GsmClient {
+    friend class TinyGsmSim7600;
 
-      public:
-        GsmClientSim7600() {}
+   public:
+    GsmClientSim7600() {}
 
-        explicit GsmClientSim7600(TinyGsmSim7600& modem, uint8_t mux = 0) {
-          init(&modem, mux);
-        }
+    explicit GsmClientSim7600(TinyGsmSim7600& modem, uint8_t mux = 0) {
+      init(&modem, mux);
+    }
 
-        bool init(TinyGsmSim7600* modem, uint8_t mux = 0) {
-          this->at       = modem;
-          sock_available = 0;
-          prev_check     = 0;
-          sock_connected = false;
-          got_data       = false;
+    bool init(TinyGsmSim7600* modem, uint8_t mux = 0) {
+      this->at       = modem;
+      sock_available = 0;
+      prev_check     = 0;
+      sock_connected = false;
+      got_data       = false;
 
-          if (mux < TINY_GSM_MUX_COUNT) {
-            this->mux = mux;
-          } else {
-            this->mux = (mux % TINY_GSM_MUX_COUNT);
-          }
-          at->sockets[this->mux] = this;
-
-          return true;
-        }
-
-      public:
-        virtual int connect(const char* host, uint16_t port, int timeout_s) {
-          stop();
-          TINY_GSM_YIELD();
-          rx.clear();
-          sock_connected = at->modemConnect(host, port, mux, false, timeout_s);
-          return sock_connected;
-        }
-        TINY_GSM_CLIENT_CONNECT_OVERRIDES
-
-        void stop(uint32_t maxWaitMs) {
-          dumpModemBuffer(maxWaitMs);
-          at->sendAT(GF("+CIPCLOSE="), mux);
-          sock_connected = false;
-          at->waitResponse();
-        }
-        void stop() override {
-          stop(15000L);
-        }
-
-        /*
-         * Extended API
-         */
-
-        String remoteIP() TINY_GSM_ATTR_NOT_IMPLEMENTED;
-    };
-
-    /*
-     * Inner Secure Client
-     */
-
-    /*TODO(?))
-    class GsmClientSecureSIM7600 : public GsmClientSim7600
-    {
-    public:
-      GsmClientSecure() {}
-
-      GsmClientSecure(TinyGsmSim7600& modem, uint8_t mux = 0)
-       : public GsmClient(modem, mux)
-      {}
-
-    public:
-      int connect(const char* host, uint16_t port, int timeout_s) override {
-        stop();
-        TINY_GSM_YIELD();
-        rx.clear();
-        sock_connected = at->modemConnect(host, port, mux, true, timeout_s);
-        return sock_connected;
+      if (mux < TINY_GSM_MUX_COUNT) {
+        this->mux = mux;
+      } else {
+        this->mux = (mux % TINY_GSM_MUX_COUNT);
       }
-      TINY_GSM_CLIENT_CONNECT_OVERRIDES
-    };
-    */
+      at->sockets[this->mux] = this;
 
-    /*
-     * Constructor
-     */
-  public:
-    explicit TinyGsmSim7600(Stream& stream) : stream(stream) {
-      memset(sockets, 0, sizeof(sockets));
+      return true;
+    }
+
+   public:
+    virtual int connect(const char* host, uint16_t port, int timeout_s) {
+      stop();
+      TINY_GSM_YIELD();
+      rx.clear();
+      sock_connected = at->modemConnect(host, port, mux, false, timeout_s);
+      return sock_connected;
+    }
+    TINY_GSM_CLIENT_CONNECT_OVERRIDES
+
+    void stop(uint32_t maxWaitMs) {
+      dumpModemBuffer(maxWaitMs);
+      at->sendAT(GF("+CIPCLOSE="), mux);
+      sock_connected = false;
+      at->waitResponse();
+    }
+    void stop() override {
+      stop(15000L);
     }
 
     /*
-     * Basic functions
+     * Extended API
      */
-  protected:
-    bool initImpl(const char* pin = NULL) {
-      DBG(GF("### TinyGSM Version:"), TINYGSM_VERSION);
-      DBG(GF("### TinyGSM Compiled Module:  TinyGsmClientSIM7600"));
 
-      if (!testAT()) {
-        return false;
-      }
+    String remoteIP() TINY_GSM_ATTR_NOT_IMPLEMENTED;
+  };
 
   /*
    * Inner Secure Client
@@ -361,74 +315,43 @@ class TinyGsmSim7600 : public TinyGsmModem<TinyGsmSim7600>,
     if (user && strlen(user) > 0) {
       sendAT(GF("+CGAUTH=1,0,\""), pwd, GF("\",\""), user, '"');
       waitResponse();
-
-      DBG(GF("### Modem:"), getModemName());
-
-      // Disable time and time zone URC's
-      sendAT(GF("+CTZR=0"));
-      if (waitResponse(10000L) != 1) {
-        return false;
-      }
-
-      // Enable automatic time zome update
-      sendAT(GF("+CTZU=1"));
-      if (waitResponse(10000L) != 1) {
-        return false;
-      }
-
-      SimStatus ret = getSimStatus();
-      // if the sim isn't ready and a pin has been provided, try to unlock the sim
-      if (ret != SIM_READY && pin != NULL && strlen(pin) > 0) {
-        simUnlock(pin);
-        return (getSimStatus() == SIM_READY);
-      } else {
-        // if the sim is ready, or it's locked but no pin has been provided,
-        // return true
-        return (ret == SIM_READY || ret == SIM_LOCKED);
-      }
     }
 
-    String getModemNameImpl() {
-      String name = "SIMCom SIM7600";
+    // Define external PDP context 1
+    sendAT(GF("+CGDCONT=1,\"IP\",\""), apn, '"', ",\"0.0.0.0\",0,0");
+    waitResponse();
 
-      sendAT(GF("+CGMM"));
-      String res2;
-      if (waitResponse(1000L, res2) != 1) {
-        return name;
-      }
-      res2.replace(GSM_NL "OK" GSM_NL, "");
-      res2.replace("_", " ");
-      res2.trim();
+    // Configure TCP parameters
 
-      name = res2;
-      DBG("### Modem:", name);
-      return name;
-    }
+    // Select TCP/IP application mode (command mode)
+    sendAT(GF("+CIPMODE=0"));
+    waitResponse();
 
-    bool factoryDefaultImpl() {  // these commands aren't supported
-      return false;
-    }
+    // Set Sending Mode - send without waiting for peer TCP ACK
+    sendAT(GF("+CIPSENDMODE=0"));
+    waitResponse();
 
-    /*
-     * Power functions
-     */
-  protected:
-    bool restartImpl(const char* pin = NULL) {
-      if (!testAT()) {
-        return false;
-      }
-      sendAT(GF("+CRESET"));
-      if (waitResponse(10000L) != 1) {
-        return false;
-      }
-      delay(5000L);  // TODO(?):  Test this delay!
-      return init(pin);
-    }
+    // Configure socket parameters
+    // AT+CIPCCFG= <NmRetry>, <DelayTm>, <Ack>, <errMode>, <HeaderType>,
+    //            <AsyncMode>, <TimeoutVal>
+    // NmRetry = number of retransmission to be made for an IP packet
+    //         = 10 (default)
+    // DelayTm = number of milliseconds to delay before outputting received data
+    //          = 0 (default)
+    // Ack = sets whether reporting a string "Send ok" = 0 (don't report)
+    // errMode = mode of reporting error result code = 0 (numberic values)
+    // HeaderType = which data header of receiving data in multi-client mode
+    //            = 1 (+RECEIVE,<link num>,<data length>)
+    // AsyncMode = sets mode of executing commands
+    //           = 0 (synchronous command executing)
+    // TimeoutVal = minimum retransmission timeout in milliseconds = 75000
+    sendAT(GF("+CIPCCFG=10,0,0,0,1,0,75000"));
+    if (waitResponse() != 1) { return false; }
 
-    bool powerOffImpl() {
-      sendAT(GF("+CPOF"));
-      return waitResponse() == 1;
-    }
+    // Configure timeouts for opening and closing sockets
+    // AT+CIPTIMEOUT=<netopen_timeout> <cipopen_timeout>, <cipsend_timeout>
+    sendAT(GF("+CIPTIMEOUT="), 75000, ',', 15000, ',', 15000);
+    waitResponse();
 
     // Start the socket service
 
@@ -780,46 +703,43 @@ class TinyGsmSim7600 : public TinyGsmModem<TinyGsmSim7600>,
 #endif
       sockets[mux]->rx.put(c);
     }
+    // DBG("### READ:", len_requested, "from", mux);
+    // sockets[mux]->sock_available = modemGetAvailable(mux);
+    sockets[mux]->sock_available = len_confirmed;
+    waitResponse();
+    return len_requested;
+  }
 
-    bool setPhoneFunctionalityImpl(uint8_t fun, bool reset = false) {
-      sendAT(GF("+CFUN="), fun, reset ? ",1" : "");
-      return waitResponse(10000L) == 1;
-    }
-
-    /*
-     * Generic network functions
-     */
-  public:
-    RegStatus getRegistrationStatus() {
-      return (RegStatus)getRegistrationStatusXREG("CGREG");
-    }
-
-  protected:
-    bool isNetworkConnectedImpl() {
-      RegStatus s = getRegistrationStatus();
-      return (s == REG_OK_HOME || s == REG_OK_ROAMING);
-    }
-
-  public:
-    String getNetworkModes() {
-      sendAT(GF("+CNMP=?"));
-      if (waitResponse(GF(GSM_NL "+CNMP:")) != 1) {
-        return "";
-      }
-      String res = stream.readStringUntil('\n');
+  size_t modemGetAvailable(uint8_t mux) {
+    if (!sockets[mux]) return 0;
+    sendAT(GF("+CIPRXGET=4,"), mux);
+    size_t result = 0;
+    if (waitResponse(GF("+CIPRXGET:")) == 1) {
+      streamSkipUntil(',');  // Skip mode 4
+      streamSkipUntil(',');  // Skip mux
+      result = streamGetIntBefore('\n');
       waitResponse();
-      return res;
     }
+    // DBG("### Available:", result, "on", mux);
+    if (!result) { sockets[mux]->sock_connected = modemGetConnected(mux); }
+    return result;
+  }
 
-    int16_t getNetworkMode() {
-      sendAT(GF("+CNMP?"));
-      if (waitResponse(GF(GSM_NL "+CNMP:")) != 1) {
-        return false;
-      }
-      int16_t mode = streamGetIntBefore('\n');
-      waitResponse();
-      return mode;
+  bool modemGetConnected(uint8_t mux) {
+    // Read the status of all sockets at once
+    sendAT(GF("+CIPCLOSE?"));
+    if (waitResponse(GF("+CIPCLOSE:")) != 1) {
+      // return false;  // TODO:  Why does this not read correctly?
     }
+    for (int muxNo = 0; muxNo < TINY_GSM_MUX_COUNT; muxNo++) {
+      // +CIPCLOSE:<link0_state>,<link1_state>,...,<link9_state>
+      bool muxState = stream.parseInt();
+      if (sockets[muxNo]) { sockets[muxNo]->sock_connected = muxState; }
+    }
+    waitResponse();  // Should be an OK at the end
+    if (!sockets[mux]) return false;
+    return sockets[mux]->sock_connected;
+  }
 
   /*
    * Utilities
@@ -870,17 +790,8 @@ class TinyGsmSim7600 : public TinyGsmModem<TinyGsmSim7600>,
     return false;
   }
 
-    int8_t waitResponse(GsmConstStr r1 = GFP(GSM_OK),
-                        GsmConstStr r2 = GFP(GSM_ERROR),
-                        #if defined TINY_GSM_DEBUG
-                        GsmConstStr r3 = GFP(GSM_CME_ERROR),
-                        GsmConstStr r4 = GFP(GSM_CMS_ERROR),
-                        #else
-                        GsmConstStr r3 = NULL, GsmConstStr r4 = NULL,
-                        #endif
-                        GsmConstStr r5 = NULL) {
-      return waitResponse(1000, r1, r2, r3, r4, r5);
-    }
+ public:
+  Stream& stream;
 
  protected:
   GsmClientSim7600* sockets[TINY_GSM_MUX_COUNT];
