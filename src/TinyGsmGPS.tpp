@@ -15,36 +15,38 @@
 
 template <class modemType>
 class TinyGsmGPS {
-  public:
-    /*
-     * GPS/GNSS/GLONASS location functions
-     */
-    bool enableGPS() {
-      return thisModem().enableGPSImpl();
-    }
-    bool disableGPS() {
-      return thisModem().disableGPSImpl();
-    }
-    bool gpsEnabled() {
-      return thisModem().gpsEnabledImpl();
-    }
-    String getGPSraw() {
-      return thisModem().getGPSrawImpl();
-    }
-    bool getGPS(float* lat, float* lon, float* speed = 0, float* alt = 0,
-                int* vsat = 0, int* usat = 0, float* accuracy = 0, int* year = 0,
-                int* month = 0, int* day = 0, int* hour = 0, int* minute = 0,
-                int* second = 0) {
-      return thisModem().getGPSImpl(lat, lon, speed, alt, vsat, usat, accuracy,
-                                    year, month, day, hour, minute, second);
-    }
-    bool getGPSTime(int* year, int* month, int* day, int* hour, int* minute,
-                    int* second) {
-      float lat = 0;
-      float lon = 0;
-      return thisModem().getGPSImpl(&lat, &lon, 0, 0, 0, 0, 0, year, month, day,
-                                    hour, minute, second);
-    }
+  /* =========================================== */
+  /* =========================================== */
+  /*
+   * Define the interface
+   */
+ public:
+  /*
+   * GPS/GNSS/GLONASS location functions
+   */
+  bool enableGPS() {
+    return thisModem().enableGPSImpl();
+  }
+  bool disableGPS() {
+    return thisModem().disableGPSImpl();
+  }
+  String getGPSraw() {
+    return thisModem().getGPSrawImpl();
+  }
+  bool getGPS(float* lat, float* lon, float* speed = 0, float* alt = 0,
+              int* vsat = 0, int* usat = 0, float* accuracy = 0, int* year = 0,
+              int* month = 0, int* day = 0, int* hour = 0, int* minute = 0,
+              int* second = 0) {
+    return thisModem().getGPSImpl(lat, lon, speed, alt, vsat, usat, accuracy,
+                                  year, month, day, hour, minute, second);
+  }
+  bool getGPSTime(int* year, int* month, int* day, int* hour, int* minute,
+                  int* second) {
+    float lat = 0;
+    float lon = 0;
+    return thisModem().getGPSImpl(&lat, &lon, 0, 0, 0, 0, 0, year, month, day,
+                                  hour, minute, second);
+  }
 
     String setGNSSMode(uint8_t mode, bool dpo) {
       return thisModem().setGNSSModeImpl(mode, dpo);
@@ -54,16 +56,23 @@ class TinyGsmGPS {
       return thisModem().getGNSSModeImpl();
     }
 
-    /*
-     * CRTP Helper
-     */
-  protected:
-    inline const modemType& thisModem() const {
-      return static_cast<const modemType&>(*this);
-    }
-    inline modemType& thisModem() {
-      return static_cast<modemType&>(*this);
-    }
+  /*
+   * CRTP Helper
+   */
+ protected:
+  inline const modemType& thisModem() const {
+    return static_cast<const modemType&>(*this);
+  }
+  inline modemType& thisModem() {
+    return static_cast<modemType&>(*this);
+  }
+  ~TinyGsmGPS() {}
+
+  /* =========================================== */
+  /* =========================================== */
+  /*
+   * Define the default function implementations
+   */
 
     /*
      * GPS/GNSS/GLONASS location functions
