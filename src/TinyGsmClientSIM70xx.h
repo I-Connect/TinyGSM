@@ -156,7 +156,7 @@ class TinyGsmSim70xx : public TinyGsmModem<SIM70xxType>,
       }
       char msg[20] = {};
       sprintf(msg, "+SGPIO=0,%d,1,%d", gpio, enable);
-      thisModem().sendAT(GF(msg));
+      thisModem().sendAT(msg);
 
       return thisModem().waitResponse(10000L, GF("OK")) == 1;
     }
