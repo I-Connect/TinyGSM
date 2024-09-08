@@ -152,7 +152,6 @@ class TinyGsmSim70xx : public TinyGsmModem<SIM70xxType>,
       // <function> Only when <operation> is set to 0, this option takes effect. 0 Set the GPIO to input. 1 Set the GPIO to output
       // <level> 0 GPIO low level 1 GPIO high level
       if (gpio > 7) {
-        log_w("invalid gpio");
         return false;
       }
       char msg[20] = {};
